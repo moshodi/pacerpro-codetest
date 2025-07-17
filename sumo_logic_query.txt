@@ -1,0 +1,20 @@
+// Scoping the search to the production logs
+_sourceCategory=prod.app_logs
+
+// Parsing JSON formatted lines to extract the fields we want
+| json field=_raw "path","duration_ms"
+
+// Filtering to only the /api/data endpoint
+| where path = "/api/data"
+
+// Keeping the entries where the response time exceeded 3 seconds
+| where duration_ms > 3000
+
+// bucketing events into 10 min windows
+| timeslice 10m
+
+// count slow requests that occured in each 10 min interval
+| count by _timeslice
+
+// only show time slices where more than five requests/responses were slow
+| wherecount > 5
